@@ -1,0 +1,154 @@
+"""Command-line interface for the PROMIS Snakemake workflow."""
+
+from __future__ import annotations
+
+import argparse
+import os
+import shutil
+import subprocess
+import sys
+from pathlib import Path
+
+from . import __version__
+from .workflow import (
+    get_default_config_path,
+    get_snakefile_path,
+    get_workflow_path,
+)
+
+
+def _build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=(
+            "PROMIS launches the packaged Snakemake workflow for microsatellite "
+            "instability (MSI) analysis."
+        ),
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "-j",
+        "--cores",
+        type=int,
+        default=1,
+        help="Number of cores/jobs to use when running Snakemake.",
+    )
+    parser.add_argument(
+        "--configfile",
+        type=str,
+        default=None,
+        help="Path to a Snakemake configuration YAML file.",
+    )
+    parser.add_argument(
+        "--workdir",
+        type=str,
+        default=None,
+        help="Working directory from which Snakemake should execute the workflow.",
+    )
+    parser.add_argument(
+        "--use-conda",
+        action="store_true",
+        help="Enable Snakemake's --use-conda flag to create rule-specific environments.",
+    )
+    parser.add_argument(
+        "--conda-prefix",
+        type=str,
+        default=None,
+        help="Optional directory used by Snakemake to store Conda environments.",
+    )
+    parser.add_argument(
+        "-n",
+        "--dry-run",
+        action="store_true",
+        help="Perform a dry run without executing rules (passes --dry-run to Snakemake).",
+    )
+    parser.add_argument(
+        "--keep-going",
+        action="store_true",
+        help="Continue independent jobs after failures (Snakemake's --keep-going).",
+    )
+    parser.add_argument(
+        "--printshellcmds",
+        action="store_true",
+        help="Print shell commands that Snakemake executes.",
+    )
+    parser.add_argument(
+        "--print-config",
+        action="store_true",
+        help="Print the packaged default configuration file and exit.",
+    )
+    parser.add_argument(
+        "--workflow-dir",
+        action="store_true",
+        help="Print the path to the installed workflow directory and exit.",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"PROMIS {__version__}",
+    )
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = _build_parser()
+    args, extra_args = parser.parse_known_args(argv)
+
+    snakefile_path = Path(get_snakefile_path())
+    default_config = Path(get_default_config_path())
+
+    if args.print_config:
+        sys.stdout.write(default_config.read_text())
+        return 0
+
+    if args.workflow_dir:
+        sys.stdout.write(str(get_workflow_path()) + os.linesep)
+        return 0
+
+    if args.configfile:
+        configfile = Path(args.configfile).expanduser().resolve()
+    else:
+        configfile = default_config
+
+    if not configfile.exists():
+        parser.error(f"Configuration file not found: {configfile}")
+
+    snakemake_executable = shutil.which("snakemake")
+    if snakemake_executable is None:
+        parser.error(
+            "The 'snakemake' executable was not found. Install snakemake-minimal "
+            "or snakemake in the current environment."
+        )
+
+    command = [
+        snakemake_executable,
+        "--snakefile",
+        str(snakefile_path),
+        "--cores",
+        str(args.cores),
+        "--configfile",
+        str(configfile),
+    ]
+
+    if args.use_conda:
+        command.append("--use-conda")
+    if args.conda_prefix:
+        command.extend(["--conda-prefix", args.conda_prefix])
+    if args.dry_run:
+        command.append("--dry-run")
+    if args.keep_going:
+        command.append("--keep-going")
+    if args.printshellcmds:
+        command.append("--printshellcmds")
+
+    passthrough = [arg for arg in extra_args if arg != "--"]
+    command.extend(passthrough)
+
+    env = os.environ.copy()
+    env.setdefault("PROMIS_WORKFLOW_DIR", str(snakefile_path.parent))
+
+    result = subprocess.run(command, cwd=args.workdir, env=env)
+    return result.returncode
+
+
+if __name__ == "__main__":  # pragma: no cover - CLI entry point
+    sys.exit(main())

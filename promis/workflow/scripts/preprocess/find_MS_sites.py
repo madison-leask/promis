@@ -5,7 +5,7 @@ This script scans a reference genome FASTA for all perfect microsatellite loci
 (mono-, di-, tri-, and tetranucleotide repeats) across standard chromosomes
 (chr1–22, chrX, chrY). It supports optional restriction of the search to
 regions defined in a BED file or to regions of a BAM file that meet a minimum
-coverage threshold. Results are written to a CSV compatible with the INTRA-MSI
+coverage threshold. Results are written to a CSV compatible with the PROMIS
 pipeline.
 
 Key Features:

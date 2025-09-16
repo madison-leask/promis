@@ -12,6 +12,8 @@ dependencies:
   - biopython
   - snakemake
   - pip
+  - rich
+  - tqdm
   - seaborn
   - scikit-learn
   - numba

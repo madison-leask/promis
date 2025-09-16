@@ -1,0 +1,33 @@
+# Default configuration for the PROMIS workflow.
+# Paths to packaged reference data are resolved automatically; override them if
+# you have custom resources.
+repeats: database/MSI_loci_hg38_coordinates_metadata_exonic_chr_rem_artefacts.csv
+cytoband: database/cytoBand_hg38.txt
+
+# Output directory for generated reports and tables.
+output_dir: output/promis_results
+
+# Provide input BAM files either as a comma-separated list (bam_files) or by
+# pointing to a directory that will be scanned recursively (input_dir).
+bam_files: ""
+input_dir: ""
+
+# Minimum deduplicated reads per locus during extraction.
+min_reads: 5
+# Minimum deviating reads to call instability.
+min_dev_reads: 5
+# Base and mapping quality thresholds used during extraction.
+bq_threshold: 20
+mq_threshold: 40
+# How to evaluate instability (count, percent, or both).
+call_by: both
+# Deviating-read percentage threshold.
+min_dev_percent: 10.0
+# Minimum reference length percentage required for one.
+min_length_percent: 20.0
+# Use Gaussian Mixture Model to infer stable length.
+use_GMM: true
+# Allowed imbalance for a second GMM component.
+balance_tolerance: 0.05
+# Minimum total reads per locus required for scoring.
+min_total_reads: 50
