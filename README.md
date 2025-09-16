@@ -1,4 +1,4 @@
-# INTRA-MSI Workflow
+# Promis Workflow
 
 This repository contains a Snakemake pipeline for assessing microsatellite instability (MSI) in sequencing data.
 
