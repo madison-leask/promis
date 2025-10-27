@@ -8,6 +8,8 @@ package:
 source:
   git_url: https://github.com/promis-bio/promis.git
   git_rev: v{{ version }}
+  url: https://github.com/promis-bio/promis/archive/refs/tags/v{{ version }}.tar.gz
+  sha256: 6410b2ca694945b038405412d53f7d1200981126a357040b73d8bae9de9b52d0
 
 build:
   noarch: python
@@ -47,6 +49,7 @@ test:
   commands:
     - promis --help
     - promis --print-config > /dev/null
+    - promis --workflow-dir > /dev/null
 
 about:
   home: https://github.com/promis-bio/promis
@@ -56,4 +59,4 @@ about:
 
 extra:
   recipe-maintainers:
-    - promis-maintainers
+    - promis-bio
