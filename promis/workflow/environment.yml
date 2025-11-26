@@ -1,0 +1,18 @@
+name: promis
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python>=3.10,<3.12
+  - snakemake-minimal==9.9.0
+  - pandas>=1.5
+  - numpy>=1.23
+  - scikit-learn>=1.1
+  - matplotlib-base>=3.5
+  - seaborn>=0.11
+  - pysam>=0.21
+  - pyyaml>=5.4
+  - rich>=13.0
+  - numba>=0.57
+  - tqdm>=4.64

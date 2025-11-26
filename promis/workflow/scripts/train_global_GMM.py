@@ -1,3 +1,14 @@
+"""Train a global Gaussian Mixture Model for MSI repeat length distributions.
+
+Inputs
+------
+- CSV of observed repeat lengths from multiple samples.
+
+Outputs
+-------
+- Pickled GaussianMixture model that can be reused by ``apply_global_GMM.py``.
+"""
+
 import pandas as pd
 import numpy as np
 import argparse

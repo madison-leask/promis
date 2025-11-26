@@ -93,7 +93,7 @@ and provides no standardized CLI entry point.
 ## Implementation Details
 
 ### Dependencies
-- Python ≥3.9
+- Python ≥3.10
 - pandas, numpy, scikit-learn, matplotlib-base, seaborn, pysam, pyyaml, rich,
   tqdm, numba, snakemake-minimal
 
@@ -101,8 +101,8 @@ and provides no standardized CLI entry point.
 - Default configuration template stored at `promis/workflow/config.yaml`.
 - Resource resolver `_resolve_data_path` in the Snakefile makes paths relative to
 the packaged workflow directory.
-- Rule environments use `promis/workflow/femwell_msi.yaml` with added rich/tqdm
-packages.
+- Rule environments use `promis/workflow/environment.yml` shipped with the
+pipeline.
 
 ### Performance Considerations
 - No runtime optimisations introduced; performance characteristics are governed

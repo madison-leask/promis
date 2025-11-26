@@ -1,3 +1,15 @@
+"""Plot scatter, heatmap, and cytoband instability visualizations per sample.
+
+Inputs
+------
+- CSV from ``analyze_MSI_distribution.py`` with locus-level instability calls.
+- Cytoband annotation file for chromosomal plotting.
+
+Outputs
+-------
+- Scatter, heatmap, and cytoband PDF plots summarizing regional MSI patterns.
+"""
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns

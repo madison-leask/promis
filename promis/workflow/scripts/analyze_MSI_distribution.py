@@ -1,3 +1,15 @@
+"""Classify MSI loci as stable or unstable using deviating read statistics.
+
+Inputs
+------
+- CSV from ``analyze_MSI_lengths.py`` with per-locus repeat length estimates.
+
+Outputs
+-------
+- CSV summarizing per-locus instability calls, MSI scores, and MSI status text
+  used by downstream plotting and aggregation steps.
+"""
+
 import pandas as pd
 import numpy as np
 import argparse

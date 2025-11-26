@@ -1,3 +1,15 @@
+"""Summarize instability patterns by repeat unit length and type.
+
+Inputs
+------
+- CSV from ``analyze_MSI_lengths.py`` with per-locus repeat length estimates.
+
+Outputs
+-------
+- Summary CSV aggregating instability metrics by repeat unit length.
+- Optional barplot and scatterplot PDFs highlighting unstable repeat classes.
+"""
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
