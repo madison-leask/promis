@@ -1,5 +1,0 @@
-include LICENSE
-include README.md
-recursive-include promis/workflow *.py *.yaml *.yml *.csv *.txt
-recursive-exclude * __pycache__/*
-recursive-exclude * .ipynb_checkpoints/*
