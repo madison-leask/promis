@@ -1,3 +1,15 @@
+"""Apply a pre-trained global Gaussian Mixture Model to MSI length data.
+
+Inputs
+------
+- CSV containing locus-level repeat lengths.
+- Pickled GaussianMixture model file produced by ``train_global_GMM.py``.
+
+Outputs
+-------
+- CSV with predicted mixture component labels and updated instability metrics.
+"""
+
 import pandas as pd
 import numpy as np
 import argparse

@@ -1,3 +1,17 @@
+"""Quantify repeat lengths for microsatellite loci using extracted reads.
+
+Inputs
+------
+- CSV produced by ``extract_MSI_sequences.py`` with read-level alignments per
+  locus.
+- Reference MSI loci metadata CSV.
+
+Outputs
+-------
+- Per-sample CSV reporting observed repeat lengths, consensus length estimates,
+  and supporting read counts per locus.
+"""
+
 import pandas as pd
 import logging
 import argparse

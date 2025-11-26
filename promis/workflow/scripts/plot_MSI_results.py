@@ -1,3 +1,15 @@
+"""Create per-sample MSI status barplots from distribution summaries.
+
+Inputs
+------
+- CSV from ``analyze_MSI_distribution.py`` containing MSI_Status and per-locus
+  calls for a single sample.
+
+Outputs
+-------
+- PDF barplot showing counts of stable vs. unstable loci for the sample.
+"""
+
 import pandas as pd
 import matplotlib.pyplot as plt
 import argparse
