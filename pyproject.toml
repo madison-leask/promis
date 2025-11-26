@@ -38,6 +38,7 @@ Repository = "https://github.com/promis-bio/promis"
 
 [project.scripts]
 promis = "promis.cli:main"
+promis-find-ms-sites = "promis.workflow.scripts.preprocess.find_MS_sites:main"
 
 [tool.setuptools]
 include-package-data = true
