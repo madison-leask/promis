@@ -12,6 +12,7 @@ source:
   sha256: 6410b2ca694945b038405412d53f7d1200981126a357040b73d8bae9de9b52d0
 
 build:
+  number: 1
   noarch: python
   script: {{ PYTHON }} -m pip install . -vv
 
@@ -50,6 +51,7 @@ test:
     - promis --help
     - promis --print-config > /dev/null
     - promis --workflow-dir > /dev/null
+    - promis-find-ms-sites --help
 
 about:
   home: https://github.com/promis-bio/promis
