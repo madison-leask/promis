@@ -11,7 +11,6 @@ source:
 
 
 build:
-  number: 1
   noarch: python
   script: {{ PYTHON }} -m pip install . -vv
 
@@ -51,7 +50,6 @@ test:
     - promis --help
     - promis --print-config > /dev/null
     - promis --workflow-dir > /dev/null
-    - promis-find-ms-sites --help
 
 about:
   home: https://github.com/promis-bio/promis

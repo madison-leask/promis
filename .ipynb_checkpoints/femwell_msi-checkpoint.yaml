@@ -1,0 +1,17 @@
+name: femwell_msi
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.9
+  - pandas
+  - numpy
+  - matplotlib
+  - pysam
+  - biopython
+  - snakemake
+  - pip
+  - seaborn
+  - scikit-learn
+  - numba

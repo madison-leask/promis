@@ -1,0 +1,27 @@
+name: promis_env
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  # Core
+  - python=3.13.3
+  - snakemake=9.9
+  - conda=25.7.0
+
+  # Terminal UI
+  - rich
+
+  # Needed so ascii_magic has wheels/binaries it needs
+  - pillow>=10.3
+
+  # HPC / reproducibility helpers
+  - mamba=2.3
+  - snakemake-executor-plugin-slurm
+  - snakemake-interface-storage-plugins
+  - snakemake-interface-report-plugins
+  - pip
+
+  # PyPI-only
+  - pip:
+      - ascii_magic
