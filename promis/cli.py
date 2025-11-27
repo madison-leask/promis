@@ -16,12 +16,15 @@ from .workflow import (
     get_workflow_path,
 )
 
+DEFAULT_CONFIG_FILENAME = "config.yaml"
+DEFAULT_WORKDIR_LABEL = "workflow"
+
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
             "PROMIS launches the packaged Snakemake workflow for microsatellite "
-            "instability (MSI) analysis."
+            "instability analysis."
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
@@ -35,18 +38,19 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--configfile",
         type=str,
-        default=None,
+        default=DEFAULT_CONFIG_FILENAME,
         help="Path to a Snakemake configuration YAML file.",
     )
     parser.add_argument(
         "--workdir",
         type=str,
-        default=None,
+        default=DEFAULT_WORKDIR_LABEL,
         help="Working directory from which Snakemake should execute the workflow.",
     )
     parser.add_argument(
         "--use-conda",
-        action="store_true",
+        action=argparse.BooleanOptionalAction,
+        default=True,
         help="Enable Snakemake's --use-conda flag to create rule-specific environments.",
     )
     parser.add_argument(
@@ -67,6 +71,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Continue independent jobs after failures (Snakemake's --keep-going).",
     )
     parser.add_argument(
+        "-p",
         "--printshellcmds",
         action="store_true",
         help="Print shell commands that Snakemake executes.",
@@ -82,6 +87,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Print the path to the installed workflow directory and exit.",
     )
     parser.add_argument(
+        "-v",
         "--version",
         action="version",
         version=f"PROMIS {__version__}",
@@ -95,6 +101,7 @@ def main(argv: list[str] | None = None) -> int:
 
     snakefile_path = Path(get_snakefile_path())
     default_config = Path(get_default_config_path())
+    default_workdir = Path(get_workflow_path())
 
     if args.print_config:
         sys.stdout.write(default_config.read_text())
@@ -105,12 +112,23 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.configfile:
-        configfile = Path(args.configfile).expanduser().resolve()
+        configfile = Path(args.configfile).expanduser()
+        if not configfile.is_absolute():
+            configfile = configfile.resolve()
     else:
         configfile = default_config
 
     if not configfile.exists():
         parser.error(f"Configuration file not found: {configfile}")
+
+    if args.workdir == DEFAULT_WORKDIR_LABEL:
+        workdir = default_workdir
+    else:
+        workdir = Path(args.workdir).expanduser()
+        if not workdir.is_absolute():
+            workdir = workdir.resolve()
+    if not workdir.exists():
+        parser.error(f"Working directory not found: {workdir}")
 
     snakemake_executable = shutil.which("snakemake")
     if snakemake_executable is None:
@@ -146,7 +164,7 @@ def main(argv: list[str] | None = None) -> int:
     env = os.environ.copy()
     env.setdefault("PROMIS_WORKFLOW_DIR", str(snakefile_path.parent))
 
-    result = subprocess.run(command, cwd=args.workdir, env=env)
+    result = subprocess.run(command, cwd=str(workdir), env=env)
     return result.returncode
 
 
