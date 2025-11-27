@@ -6,13 +6,16 @@ package:
   version: {{ version }}
 
 source:
-  path: ..
+  url: https://github.com/vlachosg37/promis/archive/refs/tags/v{{ version }}.tar.gz
+  sha256: 6cfbc73bf767dace39a095135dafd09cf2f4ed007d2b59e760be413521694d28
 
 
 build:
-  number: 1
+  number: 0
   noarch: python
   script: {{ PYTHON }} -m pip install . --no-deps --ignore-installed --no-cache-dir -vv
+  run_exports:
+    - {{ pin_subpackage(name, max_pin='x.x') }}
 
 requirements:
   host:
