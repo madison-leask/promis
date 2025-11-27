@@ -11,41 +11,56 @@ PROMIS is a tumor-only, reference-free microsatellite instability (MSI) caller b
 - Bundled reference loci, plotting scripts, and a reproducible conda environment
 
 ## Installation
-```bash
-# Clone the repository
- git clone https://github.com/promis-bio/promis.git
- cd promis
 
-# Create and activate the PROMIS environment
- conda env create -f promis/workflow/environment.yml
- conda activate promis
+### Via conda (recommended)
+PROMIS is available on Bioconda.
+
+```bash
+conda install -c bioconda -c conda-forge promis
 ```
+
+### From source
+
+```bash
+git clone https://github.com/promis-bio/promis.git
+cd promis
+
+conda env create -f promis/workflow/environment.yml
+conda activate promis
+```
+
+## Running the pipeline
+Use the packaged CLI wrapper (defaults shown):
+
+```bash
+# From a directory containing your config.yaml:
+promis --cores 8
+
+# Or, explicitly:
+promis --configfile config.yaml --cores 8
+```
+
+By default PROMIS:
+- looks for `config.yaml` in the directory where you run the command,
+- executes the packaged workflow, and
+- enables `--use-conda` unless disabled.
+
+Additional Snakemake options (for example `--config input_dir=... output_dir=...`) can be passed through after the known PROMIS options.
+
+## Configuration
+Place your `config.yaml` in the directory where you invoke `promis`, or point `--configfile` to its location. A template is packaged at `promis/workflow/config.yaml`; copy and edit it to set:
+- `output_dir`: destination for per-sample folders and combined results
+- `bam_files` **or** `input_dir`: explicit comma-separated BAM list or a directory to search recursively
+- `repeats`, `cytoband`, `scripts_dir`: override only if using custom resources
+- Thresholds such as `min_reads`, `min_dev_reads`, `bq_threshold`, `mq_threshold`, `min_dev_percent`, and `use_GMM`
+
+Comments in the template describe each option. All bundled resource paths resolve automatically when left at their defaults.
 
 ## Inputs
 - Coordinate-sorted, indexed BAM files for each tumor sample
 - Reference genome FASTA with accompanying index files (FAI, BWA/Bowtie2 if applicable)
 - MSI loci metadata provided in `promis/workflow/database/`
 - Optional sample sheet (columns: `sample`, `bam`) if you prefer to manage inputs outside the config file
-
-## Configuration
-1. Copy the template configuration:
-   ```bash
-   cp promis/workflow/config.yaml config.yaml
-   ```
-2. Edit `config.yaml` to set:
-   - `output_dir`: destination for per-sample folders and combined results
-   - `bam_files` **or** `input_dir`: explicit comma-separated BAM list or a directory to search recursively
-   - `repeats`, `cytoband`, `scripts_dir`: override only if using custom resources
-   - Thresholds such as `min_reads`, `min_dev_reads`, `bq_threshold`, `mq_threshold`, `min_dev_percent`, and `use_GMM`
-
-Comments in the template describe each option. All bundled resource paths resolve automatically when left at their defaults.
-
-## Running the pipeline
-From the repository root (or any working directory containing your edited `config.yaml`), run:
-```bash
-snakemake --use-conda --cores 8 --configfile config.yaml
-```
-This executes the full PROMIS workflow, creating rule-specific conda environments from `promis/workflow/environment.yml` and writing outputs under `output_dir`.
 
 ## Outputs
 Results are organized under `output_dir` (default `results/promis`):
@@ -57,29 +72,18 @@ Results are organized under `output_dir` (default `results/promis`):
 - `<sample>/<sample>_repeat_type_summary.csv` plus accompanying instability plots
 - `combined_results.csv`: cohort-level table summarizing MSI scores and unstable region counts
 
-Key columns in `combined_results.csv`:
-- `Sample`: sample identifier (from BAM basename)
-- `Score`: MSI score (% unstable loci)
-- `Unstable regions`: number of unstable loci / total loci assessed
-- `Total regions`: total loci assessed
+## Optional: Discovering microsatellite loci
+PROMIS ships with a helper CLI, `promis-find-ms-sites`, to scan a reference genome for microsatellite loci:
+
+```bash
+promis-find-ms-sites \
+  --reference hg38.fa \
+  --output hg38_msi_loci.csv \
+  --bam example.bam \
+  --min-coverage 30
+```
+
+The resulting CSV can be used as a custom loci file in the PROMIS configuration.
 
 ## Citation
-Vlachos et al., PROMIS: tumor-only profiling of microsatellite instability, bioRxiv 2025, DOI: TBD
-
-## Repository summary
-- Updated workflow orchestration (`promis/workflow/Snakefile`) with clearer configuration handling and rule descriptions
-- Consolidated conda environment definition at `promis/workflow/environment.yml`
-- Refined default configuration (`promis/workflow/config.yaml`) and packaging metadata
-- Removed pipeline cache/checkpoint files and obsolete environment stubs
-
-Top-level structure:
-- `Snakefile`: entry point that includes the packaged workflow
-- `promis/`: Python package with workflow, scripts, and bundled reference data
-- `promis/workflow/`: Snakefile, config template, environment file, and MSI reference tables
-- `docs/`: design notes
-- `conda/`: bioconda recipe scaffold
-
-Known limitations (v1.0):
-- Requires coordinate-sorted, indexed BAM inputs; CRAM is not yet supported
-- MSI loci provided for hg38; using other genomes requires supplying compatible loci/cytoband files
-- External aligner/index availability is assumed; PROMIS does not perform alignment
+Vlachos et al., PROMIS: tumor-only profiling of microsatellite instability, bioRxiv (2025), DOI: TBD
