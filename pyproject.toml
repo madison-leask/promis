@@ -45,6 +45,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
+include = ["promis", "promis.*"]
 
 [tool.setuptools.package-data]
 "promis.workflow" = [
