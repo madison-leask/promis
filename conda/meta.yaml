@@ -6,8 +6,7 @@ package:
   version: {{ version }}
 
 source:
-  git_url: https://github.com/vlachosg37/promis.git
-  git_rev: v{{ version }}
+  path: ..
 
 
 build:
