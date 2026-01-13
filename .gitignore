@@ -1,0 +1,47 @@
+# Snakemake
+.snakemake/
+*.snakemake.log
+**/.snakemake/
+
+# Jupyter / Python
+.ipynb_checkpoints/
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Local configs / secrets
+config/config_local.yaml
+config/*local*.yml
+config/*local*.yaml
+.env
+.env.*
+
+# Outputs
+output/
+outputs/
+results/
+logs/
+reports/
+tmp/
+temp/
+work/
+cache/
+
+# Large or derived files
+*.bam
+*.bai
+*.cram
+*.crai
+*.vcf
+*.vcf.gz
+*.tbi
+*.csi
+*.fastq
+*.fastq.gz
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

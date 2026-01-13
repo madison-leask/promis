@@ -1,5 +1,5 @@
-repeats: database/MSI_loci_hg38_coordinates_metadata_exonic_chr_rem_artefacts.csv
-output_dir: output/TCGA/COAD
+repeats: database/MSI_loci_hg38_exonic.csv
+output_dir: output/
 scripts_dir: scripts/
 msi_deviation: 0.1
 cytoband: database/cytoBand_hg38.txt

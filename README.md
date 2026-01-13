@@ -1,73 +1,95 @@
-# Promis Workflow
+# PROMIS: PROfiling of Microsatellite InStability
 
-This repository contains a Snakemake pipeline for assessing microsatellite instability (MSI) in sequencing data.
+## Overview
+PROMIS is a tumor-only, reference-free microsatellite instability (MSI) caller built on Snakemake. It models repeat-length mixtures at hundreds of microsatellite loci and reports continuous MSI scores plus binary MSI-high/MSS status for whole-exome, whole-genome, targeted panel, and cell-free DNA sequencing data.
 
-## Usage
+## Features
+- Tumor-only workflow (no matched normal required)
+- Discrete mixture modeling at microsatellite loci
+- Continuous MSI score and binary MSI-high/MSS classification
+- Works on exome, genome, and targeted panel data (including tissue and cfDNA)
+- Bundled reference loci, plotting scripts, and a reproducible conda environment
 
-### 1. Copy the repository and install Snakemake
-Clone this repository and ensure Snakemake is available. A convenient option is to
-install it via Conda:
+## Installation
 
-```bash
-git clone https://github.com/your_org/INTRA-MSI.git
-cd INTRA-MSI
-conda install -c bioconda -c conda-forge snakemake
-```
-
-The pipeline automatically creates its own Conda environments when invoked with
-`--use-conda`, so no manual environment creation is required.
-
-### 2. Configure paths
-Edit `config.yaml` so that all paths reflect your local setup. Important keys include:
-
-- `input_dir` – directory containing input BAM files
-- `output_dir` – where results will be written
-- `scripts_dir` – path to this repository's scripts directory
-- `repeats` – location of the MSI loci table
-- `cytoband` – path to the cytoband annotation file
-- `min_reads` – minimum deduplicated reads per locus (default: 100)
-- `min_dev_reads` – minimum deviating reads to call instability (default: 30)
-- `bq_threshold` – base quality cutoff for read extraction (default: 28)
-- `mq_threshold` – mapping quality cutoff for read extraction (default: 40)
-- `call_by` – how to call instability (`count`, `percent`, or `both`)
-- `min_dev_percent` – percentage of deviating reads to call instability (default: 10.0)
-- `min_length_percent` – minimum reference coverage percentage (default: 5.0)
-- `use_GMM` – apply Gaussian Mixture Model (default: true)
-- `balance_tolerance` – allowed imbalance for GMM components (default: 0.01)
-
-### Logging
-
-Analysis scripts such as `scripts/analyze_MSI_distribution.py` support
-additional logging controls:
-
-- `--info` – enable info-level logging
-- `-v/--verbose` – enable debug-level logging
-
-### 3. Run the workflow
-After adjusting the configuration, execute Snakemake. The example below shows a
-typical command, where `-np` performs a dry run. Omit `-np` to run the
-pipeline:
+### Via conda (recommended)
+PROMIS is available via anaconda.
 
 ```bash
-snakemake --config \
-  input_dir="/home/isilon/humangenetik/ANALYSES/Georgios/TCGA_MSI/data/1st_run_COAD/bam/" \
-  output_dir="output/TCGA/COAD_250620" \
-  -c all -j 16 --use-conda --keep-going --rerun-incomplete \
-  -s snakefile_test -np
+# Create a clean base environment with a compatible Python version
+conda create -n promis -y -c conda-forge python=3.12
+conda activate promis
+
+# Install PROMIS (and dependencies)
+conda install vlachosg37::promis
 ```
 
-## Expected outputs
-Results are generated inside `output_dir` as defined in the configuration. For each sample the workflow produces:
 
-- `<sample>_extracted_reads.csv`
-- `<sample>_repeats_analysis.csv`
-- `<sample>_distribution_analysis.csv`
-- PDF visualisations:
-  - `<sample>_barplot_MSI.pdf`
-  - `<sample>_scatter_plot.pdf`
-  - `<sample>_heatmap_plot.pdf`
-  - `<sample>_cytoband_instability_plot.pdf`
-  - `<sample>_repeat_unit_instability_barplot.pdf`
-  - `<sample>_repeat_length_vs_instability_scatterplot.pdf`
-- A combined summary file: `combined_results.csv`
-- 
+## Running the pipeline
+Use the packaged CLI wrapper (defaults shown):
+
+```bash
+# From a directory containing your config.yaml:
+promis --cores 8
+
+# Or, explicitly:
+promis --configfile config.yaml --cores 8
+```
+
+By default PROMIS:
+- looks for `config.yaml` in the directory where you run the command,
+- executes the packaged workflow, and
+- enables `--use-conda` unless disabled.
+
+Additional Snakemake options (for example `--config input_dir=... output_dir=...`) can be passed through after the known PROMIS options.
+
+## Configuration
+Place your `config.yaml` in the directory where you invoke `promis`, or point `--configfile` to its location. A template is packaged at `promis/workflow/config.yaml`; copy and edit it to set:
+- `output_dir`: destination for per-sample folders and combined results
+- `bam_files` **or** `input_dir`: explicit comma-separated BAM list or a directory to search recursively
+- `repeats`, `cytoband`, `scripts_dir`: override only if using custom resources
+- Thresholds such as `min_reads`, `min_dev_reads`, `bq_threshold`, `mq_threshold`, `min_dev_percent`, and `use_GMM`
+
+Comments in the template describe each option. All bundled resource paths resolve automatically when left at their defaults.
+
+## Inputs
+- Coordinate-sorted, indexed BAM files for each tumor sample
+- Reference genome FASTA with accompanying index files (FAI, BWA/Bowtie2 if applicable)
+- MSI loci metadata provided in `promis/workflow/database/`
+- Optional sample sheet (columns: `sample`, `bam`) if you prefer to manage inputs outside the config file
+
+## Outputs
+Results are organized under `output_dir` (default `results/promis`):
+- `<sample>/<sample>_extracted_reads.csv`: filtered reads spanning each MSI locus
+- `<sample>/<sample>_repeats_analysis.csv`: inferred repeat lengths per locus
+- `<sample>/<sample>_distribution_analysis.csv`: stability calls and MSI status per locus
+- `<sample>/<sample>_barplot_MSI.pdf`: MSI status barplot
+- `<sample>/<sample>_scatter_plot.pdf`, `<sample>/<sample>_heatmap_plot.pdf`, `<sample>/<sample>_cytoband_instability_plot.pdf`: region-level visualizations
+- `<sample>/<sample>_repeat_type_summary.csv` plus accompanying instability plots
+- `combined_results.csv`: cohort-level table summarizing MSI scores and unstable region counts
+
+## Optional: Discovering microsatellite loci
+PROMIS ships with a helper CLI, `promis-find-ms-sites`, to scan a reference genome for microsatellite loci:
+
+```bash
+promis-find-ms-sites \
+  --reference hg38.fa \
+  --output hg38_msi_loci.csv \
+  --bam example.bam \
+  --min-coverage 30
+```
+
+The resulting CSV can be used as a custom loci file in the PROMIS configuration.
+
+## Citation
+Vlachos et al., PROMIS: tumor-only profiling of microsatellite instability, bioRxiv (2025), DOI: TBD
+
+### Installing from source
+
+```bash
+git clone https://github.com/promis-bio/promis.git
+cd promis
+
+conda env create -f promis/workflow/environment.yml
+conda activate promis
+```
