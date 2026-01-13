@@ -47,8 +47,6 @@ nano config/config.yaml
 ```
 
 At minimum, set:
-
-At minimum, set:
 - `input_dir`: directory containing coordinate-sorted BAMs and their indexes (`.bam` and matching `.bai`).
 - `output_dir`: directory where PROMIS will write results (recommended: do not end with `/`).
 - Any other reference/resource paths required by your run. By default, PROMIS uses `database/MSI_loci_hg38_exonic.csv`, which provides broad coverage suitable for WGS and WES. For targeted panels, see [Optional: Discovering microsatellite loci](#optional-discovering-microsatellite-loci).
@@ -113,7 +111,7 @@ Results are written under `output_dir`. Typical outputs include:
 
 ## Optional: Discovering microsatellite loci
 
-PROMIS includes a helper to scan a reference genome for microsatellite loci. This is usefull if you have a targeted panel and you want to use loci found there. In general you 
+PROMIS includes a helper to scan a reference genome for microsatellite loci. This is usefull if you have a targeted panel and you want to use loci found there. 
 
 ```bash
 python scripts/preprocess/find_MS_sites.py \
@@ -135,7 +133,3 @@ python scripts/preprocess/find_MS_sites.py \
 Use the resulting CSV as a custom loci file via your configuration.
 
 ---
-
-## Citation
-
-Vlachos et al., PROMIS: tumor-only profiling of microsatellite instability, bioRxiv (2025), DOI: TBD
