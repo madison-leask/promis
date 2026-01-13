@@ -1,0 +1,24 @@
+name: promis_env
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - python=3.12
+  - snakemake=9.14.6
+  - conda=24.11.2
+  - mamba=2.0.5
+  - pip=24.3.1
+
+  # Core stack
+  - numpy=1.26.4
+  - pandas=2.2.3
+  - scikit-learn=1.5.2
+  - matplotlib-base=3.9.2
+  - seaborn=0.13.2
+  - pysam=0.22.1
+  - pyyaml=6.0.2
+  - tqdm=4.66.6
+  - rich=13.9.4
+  - numba=0.60.0
+

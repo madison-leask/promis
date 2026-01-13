@@ -4,7 +4,7 @@ import yaml
 from glob import glob
 
 # Load default configurations from `config.yaml`
-with open("config.yaml") as f:
+with open("config/config.yaml") as f:
     config = yaml.safe_load(f)
 
 # Update `config` with command-line overrides
@@ -78,7 +78,7 @@ rule extract_reads:
     output:
         extracted_csv="{output_dir}/{sample}/{sample}_extracted_reads.csv"
     conda:
-        "femwell_msi.yaml"
+        "envs/promis_rules.yaml"
     shell:
         """
         python {scripts_dir}/extract_MSI_sequences.py \
@@ -97,7 +97,7 @@ rule analyze_repeats:
     output:
         repeats_csv="{output_dir}/{sample}/{sample}_repeats_analysis.csv"
     conda:
-        "femwell_msi.yaml"
+        "envs/promis_rules.yaml"
     shell:
         """
         python {scripts_dir}/analyze_MSI_lengths.py -e "{input.extracted_csv}" -r "{input.repeats}" -o "{output.repeats_csv}" -t {msi_deviation}
@@ -111,7 +111,7 @@ rule analyze_distribution:
     params:
         gmm_flag=lambda wildcards: "--use_GMM" if use_GMM else ""
     conda:
-        "femwell_msi.yaml"
+        "envs/promis_rules.yaml"
     shell:
         """
         python {scripts_dir}/analyze_MSI_distribution.py \
@@ -132,7 +132,7 @@ rule plot_msi_status:
     output:
         barplot="{output_dir}/{sample}/{sample}_barplot_MSI.pdf"
     conda:
-        "femwell_msi.yaml"
+        "envs/promis_rules.yaml"
     shell:
         """
         python {scripts_dir}/plot_MSI_results.py -i {input.distribution_csv} -o {output.barplot}
@@ -146,7 +146,7 @@ rule plot_region_stats:
         heatmap_plot="{output_dir}/{sample}/{sample}_heatmap_plot.pdf",
         cytoband_plot="{output_dir}/{sample}/{sample}_cytoband_instability_plot.pdf"
     conda:
-        "femwell_msi.yaml"
+        "envs/promis_rules.yaml"
     shell:
         """
         python {scripts_dir}/plot_region_stats.py \
@@ -164,7 +164,7 @@ rule analyze_repeat_types:
         instability_plot="{output_dir}/{sample}/{sample}_repeat_unit_instability_barplot.pdf",
         length_vs_instability_plot="{output_dir}/{sample}/{sample}_repeat_length_vs_instability_scatterplot.pdf"
     conda:
-        "femwell_msi.yaml"
+        "envs/promis_rules.yaml"
     shell:
         """
         python {scripts_dir}/repeat_type_stats.py \
