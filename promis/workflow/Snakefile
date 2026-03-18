@@ -5,7 +5,7 @@ Each rule orchestrates a step of the tumor-only MSI calling workflow:
 2. Estimate repeat lengths and instability.
 3. Summarize and visualize MSI burden per sample.
 
-The workflow expects aligned BAM files and reference metadata shipped with the
+The workflow expects aligned BAM/CRAM files and reference metadata shipped with the
 repository. Configure paths and thresholds in ``config.yaml`` and launch with:
 
     snakemake -s promis/workflow/Snakefile --use-conda --cores 8 --configfile config.yaml
@@ -64,6 +64,7 @@ repeats = _resolve_data_path(
 cytoband = _resolve_data_path(config.get("cytoband"), "database/cytoBand_hg38.txt")
 scripts_dir = _resolve_data_path(config.get("scripts_dir"), "scripts")
 output_dir = config.get("output_dir", "results/promis")
+reference_genome = config.get("reference_genome", "")
 
 msi_deviation = _as_float(config.get("msi_deviation", 0.1), 0.1)
 min_reads = _as_int(config.get("min_reads", 100), 100)
@@ -82,36 +83,43 @@ config["cytoband"] = cytoband
 config["scripts_dir"] = scripts_dir
 
 # Optional inputs
-bam_files_value = config.get("bam_files", "")
+alignment_files_value = config.get("alignment_files", config.get("bam_files", ""))
 input_dir = config.get("input_dir", "")
 
 
-def _collect_bam_files(bam_value, search_dir):
-    if isinstance(bam_value, list):
-        bam_list = bam_value
-    elif isinstance(bam_value, str) and bam_value:
-        bam_list = [entry.strip() for entry in bam_value.split(",") if entry.strip()]
+def _collect_alignment_files(alignment_value, search_dir):
+    if isinstance(alignment_value, list):
+        alignment_list = alignment_value
+    elif isinstance(alignment_value, str) and alignment_value:
+        alignment_list = [entry.strip() for entry in alignment_value.split(",") if entry.strip()]
     else:
-        bam_list = []
+        alignment_list = []
 
-    if bam_list:
-        return bam_list
+    if alignment_list:
+        return alignment_list
 
     if search_dir:
-        return sorted(glob(str(Path(search_dir) / "**" / "*.bam"), recursive=True))
+        bam_matches = glob(str(Path(search_dir) / "**" / "*.bam"), recursive=True)
+        cram_matches = glob(str(Path(search_dir) / "**" / "*.cram"), recursive=True)
+        return sorted(bam_matches + cram_matches)
 
     return []
 
 
-bam_files = _collect_bam_files(bam_files_value, input_dir)
+alignment_files = _collect_alignment_files(alignment_files_value, input_dir)
 
-if not bam_files:
-    raise ValueError("No BAM files found. Provide 'bam_files' or 'input_dir' in config.yaml.")
+if not alignment_files:
+    raise ValueError(
+        "No alignment files found. Provide 'alignment_files' (or legacy 'bam_files') or 'input_dir' in config.yaml."
+    )
 
 if not output_dir:
     raise ValueError("Please specify the 'output_dir' path in the config.")
 
-sample_names = [Path(bam).stem for bam in bam_files]
+sample_names = [
+    Path(alignment).name.removesuffix(".bam").removesuffix(".cram")
+    for alignment in alignment_files
+]
 
 rule all:
     """Generate per-sample MSI summaries and the combined cohort table."""
@@ -149,10 +157,10 @@ rule all:
         ),
 
 rule extract_reads:
-    """Pull high-quality reads spanning MSI loci from each BAM file."""
+    """Pull high-quality reads spanning MSI loci from each alignment file."""
 
     input:
-        bam=lambda wildcards: bam_files[sample_names.index(wildcards.sample)],
+        alignment=lambda wildcards: alignment_files[sample_names.index(wildcards.sample)],
         repeats=repeats,
     output:
         extracted_csv="{output_dir}/{sample}/{sample}_extracted_reads.csv",
@@ -161,9 +169,10 @@ rule extract_reads:
     shell:
         """
         python "{scripts_dir}/extract_MSI_sequences.py" \
-            -b {input.bam} \
+            -a {input.alignment} \
             -r {input.repeats} \
             -o {output.extracted_csv} \
+            --reference {reference_genome} \
             --bq_threshold {bq_threshold} \
             --mq_threshold {mq_threshold} \
             --min_reads {min_reads}
@@ -315,4 +324,3 @@ rule combine_results:
 
         combined_df = pd.DataFrame(combined_rows)
         combined_df.to_csv(output.combined_csv, index=False)
-

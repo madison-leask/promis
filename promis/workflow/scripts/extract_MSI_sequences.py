@@ -4,7 +4,7 @@ extract_MSI_sequences.py
 ===============================================================================
 
 Description:
-    This script extracts high-quality reads from a BAM file that fully span
+    This script extracts high-quality reads from an alignment file (BAM/CRAM) that fully span
     predefined microsatellite (MSI) repeat regions. It supports consensus BAMs
     with UMIs and enables filtering by base quality, mapping quality, and 
     sequence ambiguity.
@@ -28,7 +28,7 @@ Features:
     • Outputs a deduplicated CSV table with MSI region read summaries
 
 Intended Use:
-    Designed for pre-processing consensus BAM files in MSI detection pipelines 
+    Designed for pre-processing consensus alignment files in MSI detection pipelines 
     that require accurate, per-molecule analysis of microsatellite repeat lengths.
 
 ===============================================================================
@@ -52,11 +52,22 @@ def load_repeat_coordinates(repeats_file):
     repeats_df = repeats_df.sort_values(by=["Chromosome", "Start"]).reset_index(drop=True)
     return repeats_df
 
-def check_chr_format(bam_file, repeats_df):
+def _open_alignment(filepath, reference_path=None, threads=None):
+    lower_path = filepath.lower()
+    if lower_path.endswith(".cram"):
+        if not reference_path:
+            raise ValueError("A reference genome path is required when reading CRAM input.")
+        return pysam.AlignmentFile(filepath, "rc", reference_filename=reference_path, threads=threads)
+    if lower_path.endswith(".bam"):
+        return pysam.AlignmentFile(filepath, "rb", threads=threads)
+    raise ValueError("Unsupported alignment format. Expected a .bam or .cram file.")
+
+
+def check_chr_format(alignment_file, repeats_df, reference_path=None):
     repeats_df["Chromosome"] = repeats_df["Chromosome"].astype(str)
-    with pysam.AlignmentFile(bam_file, "rb") as bam:
-        bam_chromosomes = bam.references
-    bam_uses_chr = bam_chromosomes[0].startswith("chr")
+    with _open_alignment(alignment_file, reference_path=reference_path) as alignment:
+        alignment_chromosomes = alignment.references
+    bam_uses_chr = alignment_chromosomes[0].startswith("chr")
     repeats_uses_chr = repeats_df["Chromosome"].iloc[0].startswith("chr")
     if bam_uses_chr and not repeats_uses_chr:
         repeats_df["Chromosome"] = repeats_df["Chromosome"].apply(lambda x: f"chr{x}" if not x.startswith("chr") else x)
@@ -93,13 +104,13 @@ def collapse_umi_families(df):
         consensus_reads.append(best_read)
     return pd.DataFrame(consensus_reads)
 
-def extract_reads_from_bam(bam_file, repeats_df, output_file, bq_threshold, mq_threshold, keep_n, min_reads):
+def extract_reads_from_alignment(alignment_file, repeats_df, output_file, bq_threshold, mq_threshold, keep_n, min_reads, reference_path=None):
     try:
-        sample_name = os.path.basename(bam_file).replace(".bam", "")
+        sample_name = os.path.splitext(os.path.basename(alignment_file))[0]
         logger.info(f"Processing sample: {sample_name}")
         threads = os.cpu_count() or 1
-        bam = pysam.AlignmentFile(bam_file, "rb", threads=threads)
-        logger.info(f"Opened BAM with {threads} threads")
+        bam = _open_alignment(alignment_file, reference_path=reference_path, threads=threads)
+        logger.info(f"Opened alignment file with {threads} threads")
         extracted_data = []
 
         with Progress(transient=True) as progress:
@@ -226,14 +237,15 @@ def extract_reads_from_bam(bam_file, repeats_df, output_file, bq_threshold, mq_t
         logger.info(f"Deduplicated reads saved to: {output_file}")
 
     except Exception as e:
-        logger.error(f"An error occurred while processing the BAM file: {e}")
+        logger.error(f"An error occurred while processing the alignment file: {e}")
         raise
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Extract reads from BAM file for specific repeat coordinates.")
-    parser.add_argument("-b", "--bam", required=True, help="Path to the BAM file.")
+    parser = argparse.ArgumentParser(description="Extract reads from an alignment file for specific repeat coordinates.")
+    parser.add_argument("-a", "--alignment", required=True, help="Path to the alignment file (.bam or .cram).")
     parser.add_argument("-r", "--repeats", required=True, help="Path to the CSV file with repeat coordinates.")
     parser.add_argument("-o", "--output", required=True, help="Path to save the extracted reads CSV file.")
+    parser.add_argument("-g", "--reference", help="Path to the reference genome FASTA (required for CRAM input).")
     parser.add_argument("--bq_threshold", type=float, default=38, help="Base quality threshold (default: 38)")
     parser.add_argument("--mq_threshold", type=int, default=58, help="Mapping quality threshold (default: 58)")
     parser.add_argument("--keep_n", type=lambda x: (str(x).lower() == 'false'), default=False, help="Whether to keep reads containing 'N' bases (default: False)")
@@ -249,8 +261,18 @@ if __name__ == "__main__":
     )
     logging.basicConfig(level=log_level, format='%(levelname)s:%(message)s')
     logger.setLevel(log_level)
+    if args.alignment.lower().endswith(".cram") and not args.reference:
+        raise ValueError("The --reference argument is required when the alignment input is CRAM.")
     repeat_coords = load_repeat_coordinates(args.repeats)
-    repeat_coords = check_chr_format(args.bam, repeat_coords)
+    repeat_coords = check_chr_format(args.alignment, repeat_coords, reference_path=args.reference)
     repeat_coords = repeat_coords.sort_values(by=["Chromosome", "Start"]).reset_index(drop=True)
-    extract_reads_from_bam(args.bam, repeat_coords, args.output, args.bq_threshold, args.mq_threshold, args.keep_n, args.min_reads)
-
+    extract_reads_from_alignment(
+        args.alignment,
+        repeat_coords,
+        args.output,
+        args.bq_threshold,
+        args.mq_threshold,
+        args.keep_n,
+        args.min_reads,
+        reference_path=args.reference,
+    )
