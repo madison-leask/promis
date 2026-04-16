@@ -1,5 +1,5 @@
 repeats: database/MSI_loci_hg38_exonic.csv
-output_dir: output
+output_dir: /Users/madileask/MSI_NGS/output/promis_output
 scripts_dir: scripts/
 msi_deviation: 0.1
 cytoband: database/cytoBand_hg38.txt
@@ -24,8 +24,4 @@ balance_tolerance: 0.05
 min_total_reads: 50
 
 #Set the input dir where the bam files are located
-input_dir: /home/isilon/humangenetik/ANALYSES/Georgios/TCGA_MSI/0a358bee-f436-4a8d-a2a6-990cfe5a0225
-
-
-
-
+input_dir: /Users/madileask/MSI_NGS/input/BCI_Feb2025/sorted_bam
