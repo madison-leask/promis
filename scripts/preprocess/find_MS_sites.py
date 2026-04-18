@@ -4,14 +4,14 @@ Microsatellite (Short Tandem Repeat) Loci Finder for Reference Genomes
 This script scans a reference genome FASTA for all perfect microsatellite loci
 (mono-, di-, tri-, and tetranucleotide repeats) across standard chromosomes
 (chr1–22, chrX, chrY). It supports optional restriction of the search to
-regions defined in a BED file or to regions of a BAM file that meet a minimum
+regions defined in a BED file or to regions of an indexed BAM/CRAM file that meet a minimum
 coverage threshold. Results are written to a CSV compatible with the INTRA-MSI
 pipeline.
 
 Key Features:
 - Numba-accelerated search for perfect repeats of motifs 1–4 bp in length.
 - User-defined minimum repeat thresholds for each motif size.
-- Optional restriction of the search space using BED intervals or BAM coverage.
+- Optional restriction of the search space using BED intervals or alignment-file coverage.
 - Deduplication of overlapping loci, keeping the longest, leftmost instance per
   motif.
 - Extraction of upstream and downstream sequence context for each locus.
@@ -43,7 +43,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description=(
             "Find microsatellites in a reference genome with optional restriction "
-            "to BED regions or to regions of a BAM that meet a minimum coverage"
+            "to BED regions or to regions of an indexed BAM/CRAM file that meet a minimum coverage"
         )
     )
     parser.add_argument("-r", "--reference", required=True, help="Reference FASTA to scan")
@@ -51,13 +51,13 @@ def parse_args():
     parser.add_argument("--bed", help="Optional BED file restricting the search")
     parser.add_argument(
         "--bam",
-        help="Optional BAM file. Only regions with at least --min-coverage are scanned",
+        help="Optional BAM or CRAM file. Only regions with at least --min-coverage are scanned",
     )
     parser.add_argument(
         "--min-coverage",
         type=int,
         default=30,
-        help="Minimum coverage required when --bam is provided",
+        help="Minimum coverage required when --bam/CRAM is provided",
     )
     args = parser.parse_args()
     if args.bed and args.bam:

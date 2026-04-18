@@ -7,7 +7,7 @@ cytoband: database/cytoBand_hg19.txt
 min_reads: 5
 # Minimum deviating reads to call instability
 min_dev_reads: 5
-# BAM filtering thresholds
+# Alignment filtering thresholds
 bq_threshold: 20
 mq_threshold: 40
 # How to evaluate instability (count, percent, or both)
@@ -23,5 +23,5 @@ balance_tolerance: 0.05
 # Minimum total reads per locus required for scoring
 min_total_reads: 50
 
-#Set the input dir where the bam files are located
+# Set the input dir where the BAM/CRAM files are located
 input_dir: /Users/madileask/MSI_NGS/input/BCI_Feb2025/sorted_bam

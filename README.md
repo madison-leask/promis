@@ -47,7 +47,7 @@ nano config/config.yaml
 ```
 
 At minimum, set:
-- `input_dir`: directory containing coordinate-sorted BAMs and their indexes (`.bam` and matching `.bai`).
+- `input_dir`: directory containing coordinate-sorted BAMs or CRAMs and their indexes (`.bam` + `.bai` or `.cram` + `.crai`).
 - `output_dir`: directory where PROMIS will write results (recommended: do not end with `/`).
 - Any other reference/resource paths required by your run. By default, PROMIS uses `database/MSI_loci_hg38_exonic.csv`, which provides broad coverage suitable for WGS and WES. For targeted panels, see [Optional: Discovering microsatellite loci](#optional-discovering-microsatellite-loci).
 
@@ -93,7 +93,7 @@ rm -rf .snakemake/conda
 
 ## Inputs
 
-* Coordinate-sorted, indexed BAM (`.bam` + `.bai`) per tumor sample
+* Coordinate-sorted, indexed alignment file per tumor sample: BAM (`.bam` + `.bai`) or CRAM (`.cram` + `.crai`)
 * MSI loci table shipped in `database/` (or a custom loci file)
 * Any additional resources specified in your `config.yaml`
 
@@ -120,7 +120,7 @@ python scripts/preprocess/find_MS_sites.py \
   --output database/panel_msi_loci.csv
 ```
 
-## Use a representative BAM (coverage-restricted scanning)
+## Use a representative alignment file (coverage-restricted scanning)
 
 ```bash
 python scripts/preprocess/find_MS_sites.py \
@@ -131,5 +131,7 @@ python scripts/preprocess/find_MS_sites.py \
 ```
 
 Use the resulting CSV as a custom loci file via your configuration.
+
+For CRAM input, use `--bam sample.cram` instead and ensure the file is indexed. Depending on how the CRAM was created, `pysam`/`samtools` may also need access to the matching reference FASTA.
 
 ---

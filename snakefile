@@ -3,6 +3,14 @@ import sys
 import yaml
 from glob import glob
 
+
+def strip_alignment_extension(path):
+    filename = os.path.basename(path)
+    for ext in (".bam", ".cram"):
+        if filename.endswith(ext):
+            return filename[: -len(ext)]
+    return filename
+
 # Load default configurations from `config.yaml`
 with open("config/config.yaml") as f:
     config = yaml.safe_load(f)
@@ -34,16 +42,19 @@ min_total_reads = int(config.get("min_total_reads", 50))
 bam_files_str = config.get("bam_files", "")
 input_dir = config.get("input_dir", "")
 
-# Validate and collect BAM paths
+# Validate and collect alignment paths
 if bam_files_str:
     bam_files = [x.strip() for x in bam_files_str.split(",")]
 elif input_dir:
-    bam_files = sorted(glob(os.path.join(input_dir, "**", "*.bam"), recursive=True))
+    bam_files = sorted(
+        glob(os.path.join(input_dir, "**", "*.bam"), recursive=True)
+        + glob(os.path.join(input_dir, "**", "*.cram"), recursive=True)
+    )
 else:
     raise ValueError("Please provide either 'bam_files' or 'input_dir' in the config.")
 
 if not bam_files:
-    raise ValueError("No BAM files found or specified.")
+    raise ValueError("No BAM or CRAM files found or specified.")
 
 # Validate mandatory keys
 if not repeats:
@@ -53,12 +64,15 @@ if not output_dir:
 if not scripts_dir:
     raise ValueError("Please specify the 'scripts_dir' path in the config.")
 if not bam_files:
-    raise ValueError("Please provide BAM files using '--config bam_files=<file1.bam>,<file2.bam>,...'")
+    raise ValueError("Please provide alignment files using '--config bam_files=<file1.bam>,<file2.cram>,...'")
 if not cytoband:
     raise ValueError("Please specify the 'cytoband' path in the config.")
 
-# Derive sample names from BAM file paths (no split needed anymore!)
-sample_names = [os.path.basename(bam).replace(".bam", "") for bam in bam_files]
+# Derive sample names from BAM/CRAM file paths.
+sample_names = [strip_alignment_extension(bam) for bam in bam_files]
+
+if len(sample_names) != len(set(sample_names)):
+    raise ValueError("Detected duplicate sample names after stripping .bam/.cram extensions.")
 
 rule all:
     input:
@@ -217,4 +231,3 @@ rule combine_results:
         
         combined_df = pd.DataFrame(combined_rows)
         combined_df.to_csv(output.combined_csv, index=False)
-
